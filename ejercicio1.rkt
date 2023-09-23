@@ -224,9 +224,44 @@
 (fnc->clauses fnc3)
 
 
+(define eqv-operator?
+  (lambda (operator)
+    (lambda (compared-string)
+      (eqv? operator compared-string))))
 
-      
-      
+
+(define-datatype d-or d-or?
+  (log-operand (operand number?))
+  (d-or-exp (operand d-or?) (operator (eqv-operator? "OR")) (another-or-exp d-or?)))
+
+;; Pruebas
+(define d-or-exp1 (log-operand 1))
+(define d-or-exp2 (d-or-exp (log-operand 2) "OR" (log-operand 1)))
+(define d-or-exp3 (d-or-exp (log-operand -1) "OR" (d-or-exp (log-operand -2) "OR" (log-operand 3))))
+(define d-or-exp4 (d-or-exp (log-operand 4) "OR" (d-or-exp (log-operand -1) "OR" (d-or-exp (log-operand -3) "OR"(log-operand 2)))))
+
+
+(define-datatype d-and d-and?
+  (and-operand (exp d-or?))
+  (d-and-exp (exp d-and?) (operator (eqv-operator? "AND")) (another-and-exp d-and?)))
+
+;; Pruebas
+(define d-and-exp1 (and-operand d-or-exp1))
+(define d-and-exp2 (and-operand d-or-exp2))
+(define d-and-exp3 (d-and-exp (and-operand d-or-exp3) "AND" (and-operand d-or-exp4)))
+(define d-and-exp4 (d-and-exp d-and-exp1 "AND" (d-and-exp d-and-exp2 "AND" d-and-exp3)))
+
+
+(define-datatype d-fnc d-fnc?
+  (fnc-exp (intro (eqv-operator? "FNC")) (num-var number?) (an-and-exp d-and?)))
+
+;; Pruebas
+(define d-fnc1 (fnc-exp "FNC" 1 d-and-exp1))
+(define d-fnc2 (fnc-exp "FNC" 2 d-and-exp2))
+(define d-fnc3 (fnc-exp "FNC" 4 d-and-exp3))
+(define d-fnc4 (fnc-exp "FNC" 4 d-and-exp4))
+
+
 
 
 
