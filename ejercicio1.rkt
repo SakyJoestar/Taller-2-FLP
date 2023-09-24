@@ -55,21 +55,21 @@
 
 
 (define or-exp
-  (lambda (num another-or-exp)
+  (lambda (num exp)
     (cond
       
       [(not (number? num))
        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser un número" num)]
 
-      [(not (or-exp? another-or-exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresion OR" another-or-exp)]
+      [(not (or-exp? exp))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresion OR" exp)]
 
-      [(null? another-or-exp)
+      [(null? exp)
        (cons num empty)]
 
       [else
        (cons num
-             (cons "OR" another-or-exp))])))
+             (cons "OR" exp))])))
 
 ;; Pruebas
 (define or-exp1 (or-exp 1 empty))
@@ -79,17 +79,17 @@
 
 
 (define or-exp->varlist
-  (lambda (an-or-exp)
+  (lambda (exp)
     (cond
       
-      [(not (or-exp? an-or-exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresion OR" an-or-exp)]
+      [(not (or-exp? exp))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresion OR" exp)]
 
-      [(eqv? (length-of-list an-or-exp) 1)
-       (cons (car an-or-exp) empty)]
+      [(eqv? (length-of-list exp) 1)
+       (cons (car exp) empty)]
 
       [else
-       (cons (car an-or-exp) (or-exp->varlist (cddr an-or-exp)))])))
+       (cons (car exp) (or-exp->varlist (cddr exp)))])))
 
 ;; Pruebas
 (or-exp->varlist or-exp1)
@@ -131,23 +131,23 @@
 
 
 (define and-exp
-  (lambda (an-or-exp another-and-exp)
+  (lambda (exp1 exp2)
     (cond
 
       [(or
-        (not (or-exp? an-or-exp))
-        (null? an-or-exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión OR válida y no vacía" an-or-exp)]
+        (not (or-exp? exp1))
+        (null? exp1))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión OR válida y no vacía" exp1)]
 
-      [(not (and-exp? another-and-exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" another-and-exp)]
+      [(not (and-exp? exp2))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" exp2)]
 
-      [(null? another-and-exp)
-       (cons an-or-exp empty)]
+      [(null? exp2)
+       (cons exp1 empty)]
 
       [else
-       (cons an-or-exp
-             (cons "AND" another-and-exp))])))
+       (cons exp1
+             (cons "AND" exp2))])))
 
 ;; Pruebas
 (define and-exp1 (and-exp or-exp1 empty))
@@ -160,18 +160,18 @@
 
 
 (define and-exp->clauses
-  (lambda (an-and-exp)
+  (lambda (exp)
   (cond
     
-    [(not (and-exp? an-and-exp))
-     (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" an-and-exp)]
+    [(not (and-exp? exp))
+     (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" exp)]
 
     
-     [(eqv? (length-of-list an-and-exp) 1)
-      (cons (car an-and-exp) empty)]
+     [(eqv? (length-of-list exp) 1)
+      (cons (car exp) empty)]
 
      [else
-      (cons (car an-and-exp) (and-exp->clauses (cddr an-and-exp)))])))
+      (cons (car exp) (and-exp->clauses (cddr exp)))])))
 
 ;; Pruebas
 (and-exp->clauses and-exp1)
@@ -180,48 +180,48 @@
 (and-exp->clauses and-exp4)
 
 
-(define fnc
-  (lambda (num-of-var an-and-exp)
+(define fnc-exp
+  (lambda (num-of-var exp)
     (cond
 
       [(not (number? num-of-var))
        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser un número" num-of-var)]
       
-      [(not (and-exp? an-and-exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" an-and-exp)]
+      [(not (and-exp? exp))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" exp)]
       
       [else
-       (list "FNC" num-of-var an-and-exp)])))
+       (list "FNC" num-of-var exp)])))
 
 ;; Pruebas
-(define fnc1 (fnc 1 and-exp1))
-(define fnc2 (fnc 3 '((-1 "OR" 2 "OR" -3) "AND" (3 "OR" 1) "AND" (2))))
-(define fnc3 (fnc 4 and-exp4))
-;(define fnc4 (fnc "AND" and-exp1))
-;(define fnc5 (fnc 2 or-exp3))
-;(define fnc6 (fnc 3 '((-1 "OR" 2 "OR" -3) "AND" (3 "OR" 1) "AND")))
-;(define fnc7 (fnc 0 (and-exp '() '())))
+(define fnc1 (fnc-exp 1 and-exp1))
+(define fnc2 (fnc-exp 3 '((-1 "OR" 2 "OR" -3) "AND" (3 "OR" 1) "AND" (2))))
+(define fnc3 (fnc-exp 4 and-exp4))
+;(define fnc4 (fnc-exp "AND" and-exp1))
+;(define fnc5 (fnc-exp 2 or-exp3))
+;(define fnc6 (fnc-exp 3 '((-1 "OR" 2 "OR" -3) "AND" (3 "OR" 1) "AND")))
+;(define fnc7 (fnc-exp 0 (and-exp '() '())))
 
 
-(define fnc->var
-  (lambda (fnc-exp)
-    (get-element-at-index fnc-exp 1)))
-
-;; Pruebas
-(fnc->var fnc1)
-(fnc->var fnc2)
-(fnc->var fnc3)
-
-
-(define fnc->clauses
-  (lambda (fnc-exp)
-    (and-exp->clauses (get-element-at-index fnc-exp 2))))
-
+(define fnc-exp->var
+  (lambda (exp)
+    (get-element-at-index exp 1)))
 
 ;; Pruebas
-(fnc->clauses fnc1)
-(fnc->clauses fnc2)
-(fnc->clauses fnc3)
+(fnc-exp->var fnc1)
+(fnc-exp->var fnc2)
+(fnc-exp->var fnc3)
+
+
+(define fnc-exp->clauses
+  (lambda (exp)
+    (and-exp->clauses (get-element-at-index exp 2))))
+
+
+;; Pruebas
+(fnc-exp->clauses fnc1)
+(fnc-exp->clauses fnc2)
+(fnc-exp->clauses fnc3)
 
 
 (define eqv-operator?
@@ -232,7 +232,7 @@
 
 (define-datatype d-or d-or?
   (log-operand (operand number?))
-  (d-or-exp (operand d-or?) (operator (eqv-operator? "OR")) (another-or-exp d-or?)))
+  (d-or-exp (operand d-or?) (operator (eqv-operator? "OR")) (exp d-or?)))
 
 ;; Pruebas
 (define d-or-exp1 (log-operand 1))
@@ -243,7 +243,7 @@
 
 (define-datatype d-and d-and?
   (and-operand (exp d-or?))
-  (d-and-exp (exp d-and?) (operator (eqv-operator? "AND")) (another-and-exp d-and?)))
+  (d-and-exp (exp1 d-and?) (operator (eqv-operator? "AND")) (exp2 d-and?)))
 
 ;; Pruebas
 (define d-and-exp1 (and-operand d-or-exp1))
@@ -253,13 +253,13 @@
 
 
 (define-datatype d-fnc d-fnc?
-  (fnc-exp (intro (eqv-operator? "FNC")) (num-var number?) (an-and-exp d-and?)))
+  (d-fnc-exp (intro (eqv-operator? "FNC")) (num-var number?) (exp d-and?)))
 
 ;; Pruebas
-(define d-fnc1 (fnc-exp "FNC" 1 d-and-exp1))
-(define d-fnc2 (fnc-exp "FNC" 2 d-and-exp2))
-(define d-fnc3 (fnc-exp "FNC" 4 d-and-exp3))
-(define d-fnc4 (fnc-exp "FNC" 4 d-and-exp4))
+(define d-fnc1 (d-fnc-exp "FNC" 1 d-and-exp1))
+(define d-fnc2 (d-fnc-exp "FNC" 2 d-and-exp2))
+(define d-fnc3 (d-fnc-exp "FNC" 4 d-and-exp3))
+(define d-fnc4 (d-fnc-exp "FNC" 4 d-and-exp4))
 
 
 
