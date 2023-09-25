@@ -515,3 +515,29 @@ parsebnf6
 (define unparseand2 (UNPARSEAND parseand2))
 (define unparseand3 (UNPARSEAND parseand3))
 (define unparseand4 (UNPARSEAND parseand4))
+
+
+;; UNPARSEBNF:  d-fnc -> exp-fnc
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión fnc a una expresión fnc basada en listas.
+;; 1) Si la exp es un d-fnc-exp entonces se crea un lista que contendra el simbolo FNC, el numero de variables
+;; y la lista resultado de invocar UNPARSEAND exp, ya que por la gramatica sabemos que exp es una expresion d-and.
+;;
+;; <fnc-exp> := "FNC" <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
+;; <or-exp> := <int> | <int> "OR" <or-exp>
+
+(define UNPARSEBNF
+  (lambda (exp)
+    (cases d-fnc exp
+      (d-fnc-exp (intro num-var exp)
+                 (list intro num-var (UNPARSEAND exp))))
+    ))
+
+;; Pruebas
+(define unparsebnf1 (UNPARSEBNF parsebnf1))
+(define unparsebnf2 (UNPARSEBNF parsebnf2))
+(define unparsebnf3 (UNPARSEBNF parsebnf3))
+(define unparsebnf4 (UNPARSEBNF parsebnf4))
+(define unparsebnf5 (UNPARSEBNF parsebnf5))
+(define unparsebnf6 (UNPARSEBNF parsebnf6))
