@@ -385,7 +385,7 @@ Christian Vargas 2179172
 
 ;; Pruebas
 (define parseor1 (PARSEOR '(1)))
-(define parseor2 (PARSEOR '(1 "OR" 2)))
+(define parseor2 (PARSEOR '(1 "OR" 3 "OR" 2)))
 (define parseor3 (PARSEOR '(1 "OR" 2 "OR" -3 "OR" 4 "OR" -5)))
 parseor1
 parseor2
@@ -447,8 +447,41 @@ parseand4
 (define parsebnf1 (PARSEBNF '("FNC" 1  ((1)))))
 (define parsebnf2 (PARSEBNF '("FNC" 2  ((1 "OR" 2)))))
 (define parsebnf3 (PARSEBNF '("FNC" 2  ((1) "AND" (2)))))
-(define parsebnf4 (PARSEBNF '("FNC" 1  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5)))))
+(define parsebnf4 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5)))))
+(define parsebnf5 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5) "AND" (3 "OR" -4)))))
+(define parsebnf6 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5) "AND" (3 "OR" -4) "AND" (3 "OR" -4)))))
 parsebnf1
 parsebnf2
 parsebnf3
-parsebnf4  
+parsebnf4
+parsebnf5
+parsebnf6
+
+;; ****************************************** Unparsers ******************************************
+
+;; UNPARSEOR:  d-or -> exp-or
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión or a una expresión or basada en listas.
+;; 1) Si la exp es un log-operand entonces se crea un lista con el operando que es un numero entero.
+;; 2) Si la exp es un d-or-exp entonces se crea una lista donde el primer elemento es el primer elemento
+;; de la lista resultante de la llamada recursiva de UNPARSEOR que por la gramatica, sabemos que sera un log-operand
+;; y por tanto un numero entero. El segundo elemento consistira en la lista conformada por el operador y
+;; la llamda recursiva de UNPARSEOR que por la gramatica sabemos que sera otra expresion d-or,
+;; por ello no se llama junto a car.
+;;
+;; <or-exp> := <int> | <int> "OR" <or-exp>
+
+(define UNPARSEOR
+  (lambda (exp)
+    (cases d-or exp
+      (log-operand (operand)
+                 (list operand))
+      (d-or-exp (operand operator exp)
+                 (cons (car (UNPARSEOR operand))
+                       (cons operator (UNPARSEOR exp)))))
+    ))
+
+;; Pruebas
+(UNPARSEOR parseor1)
+(UNPARSEOR parseor2)
+(UNPARSEOR parseor3)
