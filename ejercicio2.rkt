@@ -385,7 +385,7 @@ Christian Vargas 2179172
 
 ;; Pruebas
 (define parseor1 (PARSEOR '(1)))
-(define parseor2 (PARSEOR '(1 "OR" 2)))
+(define parseor2 (PARSEOR '(1 "OR" 3 "OR" 2)))
 (define parseor3 (PARSEOR '(1 "OR" 2 "OR" -3 "OR" 4 "OR" -5)))
 parseor1
 parseor2
@@ -447,8 +447,97 @@ parseand4
 (define parsebnf1 (PARSEBNF '("FNC" 1  ((1)))))
 (define parsebnf2 (PARSEBNF '("FNC" 2  ((1 "OR" 2)))))
 (define parsebnf3 (PARSEBNF '("FNC" 2  ((1) "AND" (2)))))
-(define parsebnf4 (PARSEBNF '("FNC" 1  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5)))))
+(define parsebnf4 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5)))))
+(define parsebnf5 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5) "AND" (3 "OR" -4)))))
+(define parsebnf6 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5) "AND" (3 "OR" -4) "AND" (3 "OR" -4)))))
 parsebnf1
 parsebnf2
 parsebnf3
-parsebnf4  
+parsebnf4
+parsebnf5
+parsebnf6
+
+;; ****************************************** Unparsers ******************************************
+
+;; UNPARSEOR:  d-or -> exp-or
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión or a una expresión or basada en listas.
+;; 1) Si la exp es un log-operand entonces se crea un lista con el operando que es un numero entero.
+;; 2) Si la exp es un d-or-exp entonces se crea una lista donde el primer elemento es el primer elemento
+;; de la lista resultante de la llamada recursiva de UNPARSEOR que por la gramatica, sabemos que sera un log-operand
+;; y por tanto un numero entero. El segundo elemento consistira en la lista conformada por el operador y
+;; la llamda recursiva de UNPARSEOR que por la gramatica sabemos que sera otra expresion d-or,
+;; por ello no se llama junto a car.
+;;
+;; <or-exp> := <int> | <int> "OR" <or-exp>
+
+(define UNPARSEOR
+  (lambda (exp)
+    (cases d-or exp
+      (log-operand (operand)
+                 (list operand))
+      (d-or-exp (operand operator exp)
+                 (cons (car (UNPARSEOR operand))
+                       (cons operator (UNPARSEOR exp)))))
+    ))
+
+;; Pruebas
+(define unparseor1 (UNPARSEOR parseor1))
+(define unparseor2 (UNPARSEOR parseor2))
+(define unparseor3 (UNPARSEOR parseor3))
+
+
+;; UNPARSEAND:  d-and -> exp-and
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión and a una expresión and basada en listas.
+;; 1) Si la exp es un and-operand entonces se crea un lista con el resultado de invocar UNPARSEOR con
+;; argumento exp.
+;; 2) Si la exp es un d-and-exp entonces se crea una lista donde el primer elemento es el primer elemento
+;; de la lista resultante de la llamada recursiva de UNPARSEAND que por la gramatica, sabemos que sera un d-or.
+;; El segundo elemento consistira en la lista conformada por el operador y la llamda recursiva de UNPARSEAND que
+;; por la gramatica sabemos que sera otra expresion d-and, por ello no se llama junto a car.
+;;
+;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
+;; <or-exp> := <int> | <int> "OR" <or-exp>
+
+(define UNPARSEAND
+  (lambda (exp)
+    (cases d-and exp
+      (and-operand (exp)
+                 (list (UNPARSEOR exp)))
+      (d-and-exp (exp1 operator exp2)
+                 (cons (car (UNPARSEAND exp1))
+                       (cons operator (UNPARSEAND exp2)))))
+    ))
+
+;; Pruebas
+(define unparseand1 (UNPARSEAND parseand1))
+(define unparseand2 (UNPARSEAND parseand2))
+(define unparseand3 (UNPARSEAND parseand3))
+(define unparseand4 (UNPARSEAND parseand4))
+
+
+;; UNPARSEBNF:  d-fnc -> exp-fnc
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión fnc a una expresión fnc basada en listas.
+;; 1) Si la exp es un d-fnc-exp entonces se crea un lista que contendra el simbolo FNC, el numero de variables
+;; y la lista resultado de invocar UNPARSEAND exp, ya que por la gramatica sabemos que exp es una expresion d-and.
+;;
+;; <fnc-exp> := "FNC" <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
+;; <or-exp> := <int> | <int> "OR" <or-exp>
+
+(define UNPARSEBNF
+  (lambda (exp)
+    (cases d-fnc exp
+      (d-fnc-exp (intro num-var exp)
+                 (list intro num-var (UNPARSEAND exp))))
+    ))
+
+;; Pruebas
+(define unparsebnf1 (UNPARSEBNF parsebnf1))
+(define unparsebnf2 (UNPARSEBNF parsebnf2))
+(define unparsebnf3 (UNPARSEBNF parsebnf3))
+(define unparsebnf4 (UNPARSEBNF parsebnf4))
+(define unparsebnf5 (UNPARSEBNF parsebnf5))
+(define unparsebnf6 (UNPARSEBNF parsebnf6))
