@@ -482,6 +482,36 @@ parsebnf6
     ))
 
 ;; Pruebas
-(UNPARSEOR parseor1)
-(UNPARSEOR parseor2)
-(UNPARSEOR parseor3)
+(define unparseor1 (UNPARSEOR parseor1))
+(define unparseor2 (UNPARSEOR parseor2))
+(define unparseor3 (UNPARSEOR parseor3))
+
+
+;; UNPARSEAND:  d-and -> exp-and
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión and a una expresión and basada en listas.
+;; 1) Si la exp es un and-operand entonces se crea un lista con el resultado de invocar UNPARSEOR con
+;; argumento exp.
+;; 2) Si la exp es un d-and-exp entonces se crea una lista donde el primer elemento es el primer elemento
+;; de la lista resultante de la llamada recursiva de UNPARSEAND que por la gramatica, sabemos que sera un d-or.
+;; El segundo elemento consistira en la lista conformada por el operador y la llamda recursiva de UNPARSEAND que
+;; por la gramatica sabemos que sera otra expresion d-and, por ello no se llama junto a car.
+;;
+;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
+;; <or-exp> := <int> | <int> "OR" <or-exp>
+
+(define UNPARSEAND
+  (lambda (exp)
+    (cases d-and exp
+      (and-operand (exp)
+                 (list (UNPARSEOR exp)))
+      (d-and-exp (exp1 operator exp2)
+                 (cons (car (UNPARSEAND exp1))
+                       (cons operator (UNPARSEAND exp2)))))
+    ))
+
+;; Pruebas
+(define unparseand1 (UNPARSEAND parseand1))
+(define unparseand2 (UNPARSEAND parseand2))
+(define unparseand3 (UNPARSEAND parseand3))
+(define unparseand4 (UNPARSEAND parseand4))
