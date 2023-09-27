@@ -316,6 +316,41 @@ and-exp4
 
 ;; ****************************************** Expresiones fnc ******************************************
 
+;; fnc-exp?:  Lista -> boolean
+;; Propósito:
+;; Identifica si una lista está construida con la estructura definida para una expresión fnc.
+;; 1) Primero evalúa si la expresión pasada como argumento es una lista.
+;; 2) Después evalúa si la lista tiene tres elementos, en cuyo caso verifica que el primer elemento sea el símbolo 'FNC,
+;; que el segundo elemento sea un número y que el tercer elemento sea una expresión and.
+;;
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
+
+(define fnc-exp?
+  (lambda (exp)
+    (cond
+      
+      [(not (list? exp))
+       #f]
+
+      [(eqv? (length-of-list exp) 3)
+       (and
+        (eqv? (car exp) 'FNC)
+        (number? (cadr exp))
+        (and-exp? (caddr exp)))]
+
+      [else
+        #f])))  
+
+;; Pruebas
+(eqv? (fnc-exp? '()) #f)
+(eqv? (fnc-exp? '(FNC 1 ((1 OR 2)))) #t)
+(eqv? (fnc-exp? '(FNC 1 ((1 OR 2 OR -3) AND (2)))) #t)
+(eqv? (fnc-exp? '(FNC 'not-a-number ((1 OR 2 OR -3) AND (2)))) #f)
+(eqv? (fnc-exp? '(FNC 1 ((1 OR 2 OR -3) AND (2 OR 1) AND (2)) '4th-element)) #f)
+
+
 ;; fnc-exp: int X and-exp -> fnc-exp
 ;; Propósito:
 ;; Construye una expresión fnc a partir de dos argumentos.
@@ -365,7 +400,9 @@ fnc3
 
 (define fnc-exp->var
   (lambda (exp)
-    (get-element-at-index exp 1)))
+    (if (not (fnc-exp? exp))
+        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión FNC" exp)
+        (get-element-at-index exp 1))))
 
 ;; Pruebas
 (fnc-exp->var fnc1)
@@ -383,7 +420,9 @@ fnc3
 
 (define fnc-exp->clauses
   (lambda (exp)
-    (and-exp->clauses (get-element-at-index exp 2))))
+    (if (not (fnc-exp? exp))
+        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión FNC" exp)
+        (and-exp->clauses (get-element-at-index exp 2)))))
 
 ;; Pruebas
 (fnc-exp->clauses fnc1)

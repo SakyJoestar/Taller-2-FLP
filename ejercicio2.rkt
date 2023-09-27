@@ -61,9 +61,9 @@ Christian Vargas 2179172
 ;; entonces la lista vacía permitirá construir expresiones or con un solo elemento: (or-exp 1 empty) -> (1)).
 ;; 3) Después evalúa si la lista tiene un solo elemento, en cuyo caso verifica que sea un número.
 ;; 4) Finalmente si la lista tiene más de un elemento, evalúa que el primer elemento sea un número, que el segundo
-;; sea el string "OR" y que el tercer elemento no sea vacío y que sea una expresión or.
+;; sea el símbolo 'OR y que el tercer elemento no sea vacío y que sea una expresión or.
 ;;
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define or-exp?
   (lambda (exp)
@@ -83,7 +83,7 @@ Christian Vargas 2179172
       [else
        (and
         (number? (car exp))
-        (eqv? (cadr exp) "OR")
+        (eqv? (cadr exp) 'OR)
         (not (null? (cddr exp)))
         (or-exp? (cddr exp)))])))
 
@@ -97,9 +97,9 @@ Christian Vargas 2179172
 ;; con el primer argumento como único elemento (retorna una expresión or con un solo elemento).
 ;; 4) Finalmente si el segundo argumento no es vacío, entonces retorna una lista con la estructura de
 ;; una expresión or, donde el primer elemento es el número pasado como primer argumento, el segundo elemento
-;; es el string "OR" y el tercer elemento es la expresión or pasada como segundo argumento.
+;; es el símbolo 'OR y el tercer elemento es la expresión or pasada como segundo argumento.
 ;;
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define or-exp
   (lambda (num exp)
@@ -116,7 +116,7 @@ Christian Vargas 2179172
 
       [else
        (cons num
-             (cons "OR" exp))])))
+             (cons 'OR exp))])))
 
 
 ;; or-exp->varlist: or-exp -> Lista-de-int
@@ -125,9 +125,9 @@ Christian Vargas 2179172
 ;; 1) Primero valida que el argumento sea una expresión or.
 ;; 2) Después valida si la expresión or tiene un solo elemento, en cuyo caso retorna una lista con ese elemento (caso base).
 ;; 3) Finalmente si la expresión or tiene más de un elemento, retorna una lista con el primer elemento y el resultado de
-;; aplicar la función or-exp->varlist a la expresión or que se encuentra después del string "OR".
+;; aplicar la función or-exp->varlist a la expresión or que se encuentra después del símbolo 'OR.
 ;;
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define or-exp->varlist
   (lambda (exp)
@@ -150,13 +150,13 @@ Christian Vargas 2179172
 ;; Identifica si una lista está construida con la estructura definida para una expresión and.
 ;; 1) Primero evalúa si la expresión pasada como argumento es una lista.
 ;; 2) Después evalúa si la lista está vacía (como el constructor de expresiones and esperará dos argumentos,
-;; entonces la lista vacía permitirá construir expresiones and con un solo elemento: (and-exp (1 "OR" 2) empty) -> ((1 "OR" 2)).
+;; entonces la lista vacía permitirá construir expresiones and con un solo elemento: (and-exp (1 OR 2) empty) -> ((1 OR 2)).
 ;; 3) Después evalúa si la lista tiene un solo elemento, en cuyo caso verifica que sea una expresión or.
 ;; 4) Finalmente si la lista tiene más de un elemento, evalúa que el primer elemento sea una expresión or, que el segundo
-;; sea el string "AND" y que el tercer elemento no sea vacío y que sea una expresión and.
+;; sea el símbolo 'AND y que el tercer elemento no sea vacío y que sea una expresión and.
 ;;
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define and-exp?
   (lambda (exp)
@@ -176,7 +176,7 @@ Christian Vargas 2179172
       [else
        (and
         (or-exp? (car exp))
-        (eqv? (cadr exp) "AND")
+        (eqv? (cadr exp) 'AND)
         (not (null? (cddr exp)))
         (and-exp? (cddr exp)))])))
 
@@ -190,10 +190,10 @@ Christian Vargas 2179172
 ;; con el primer argumento como único elemento (retorna una expresión and con una sola cláusula or).
 ;; 4) Finalmente si el segundo argumento no es vacío, entonces retorna una lista con la estructura de
 ;; una expresión and, donde el primer elemento es la expresión or pasada como primer argumento, el segundo elemento
-;; es el string "AND" y el tercer elemento es la expresión and pasada como segundo argumento.
+;; es el símbolo 'AND y el tercer elemento es la expresión and pasada como segundo argumento.
 ;;
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define and-exp
   (lambda (exp1 exp2)
@@ -212,7 +212,7 @@ Christian Vargas 2179172
 
       [else
        (cons exp1
-             (cons "AND" exp2))])))
+             (cons 'AND exp2))])))
 
 
 ;; and-exp->clauses: and-exp -> Lista-de-or-exp
@@ -221,10 +221,10 @@ Christian Vargas 2179172
 ;; 1) Primero valida que el argumento sea una expresión and.
 ;; 2) Después valida si la expresión and tiene un solo elemento, en cuyo caso retorna una lista con ese elemento (caso base).
 ;; 3) Finalmente si la expresión and tiene más de un elemento, retorna una lista con el primer elemento y el resultado de
-;; aplicar la función and-exp->clauses a la expresión and que se encuentra después del string "AND".
+;; aplicar la función and-exp->clauses a la expresión and que se encuentra después del símbolo 'AND.
 ;;
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define and-exp->clauses
   (lambda (exp)
@@ -243,18 +243,46 @@ Christian Vargas 2179172
 
 ;; ****************************************** Expresiones fnc ******************************************
 
+;; fnc-exp?:  Lista -> boolean
+;; Propósito:
+;; Identifica si una lista está construida con la estructura definida para una expresión fnc.
+;; 1) Primero evalúa si la expresión pasada como argumento es una lista.
+;; 2) Después evalúa si la lista tiene tres elementos, en cuyo caso verifica que el primer elemento sea el símbolo 'FNC,
+;; que el segundo elemento sea un número y que el tercer elemento sea una expresión and.
+;;
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
+
+(define fnc-exp?
+  (lambda (exp)
+    (cond
+      
+      [(not (list? exp))
+       #f]
+
+      [(eqv? (length-of-list exp) 3)
+       (and
+        (eqv? (car exp) 'FNC)
+        (number? (cadr exp))
+        (and-exp? (caddr exp)))]
+
+      [else
+        #f])))
+
+
 ;; fnc-exp: int X and-exp -> fnc-exp
 ;; Propósito:
 ;; Construye una expresión fnc a partir de dos argumentos.
 ;; 1) Primero valida que el primer argumento sea un número.
 ;; 2) Después valida que el segundo argumento sea una expresión and.
-;; 3) Finalmente retorna una lista con la estructura de una expresión fnc, donde el primer elemento es el string
-;; "FNC", el segundo elemento es el número pasado como primer argumento y el tercer elemento es la expresión and
+;; 3) Finalmente retorna una lista con la estructura de una expresión fnc, donde el primer elemento es el símbolo
+;; 'FNC, el segundo elemento es el número pasado como primer argumento y el tercer elemento es la expresión and
 ;; pasada como segundo argumento.
 ;;
-;; <fnc-exp> := "FNC" <int> (<and-exp>)
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define fnc-exp
   (lambda (num-of-var exp)
@@ -267,18 +295,20 @@ Christian Vargas 2179172
        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión AND" exp)]
       
       [else
-       (list "FNC" num-of-var exp)])))
+       (list 'FNC num-of-var exp)])))
 
 
 ;; fnc-exp->var: fnc-exp -> int
 ;; Propósito:
 ;; Retorna el número de variables que conforman la expresión fnc pasada como argumento.
 ;;
-;; <fnc-exp> := "FNC" <int> (<and-exp>)
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
 
 (define fnc-exp->var
   (lambda (exp)
-    (get-element-at-index exp 1)))
+    (if (not (fnc-exp? exp))
+        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión FNC" exp)
+        (get-element-at-index exp 1))))
 
 
 ;; fnc-exp->clauses: fnc-exp -> Lista-de-and-exp
@@ -287,71 +317,73 @@ Christian Vargas 2179172
 ;; Para ello aplica el procedimiento and-exp->clauses a la expresión and que se encuentra en la posición 2
 ;; de la expresión fnc.
 ;;
-;; <fnc-exp> := "FNC" <int> (<and-exp>)
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
 
 (define fnc-exp->clauses
   (lambda (exp)
-    (and-exp->clauses (get-element-at-index exp 2))))
+    (if (not (fnc-exp? exp))
+        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión FNC" exp)
+        (and-exp->clauses (get-element-at-index exp 2)))))
 
 
 ;; ################################## Representación basada en datatypes ##################################
 
-;; eqv-operator?:  String -> boolean
+;; eqv-operator?:  symbol -> boolean
 ;; Propósito:
-;; Devuelve una función que hace las veces de predicado para comparar strings.
-;; Verifica que el string pasado como argumento sea igual al string sobre el cual se aplica la función devuelta.
+;; Devuelve una función que hace las veces de predicado para comparar símbolos.
+;; Verifica que el símbolo pasado como argumento sea igual al símbolo sobre el cual se aplica la función devuelta.
 
 (define eqv-operator?
   (lambda (operator)
-    (lambda (compared-string)
-      (eqv? operator compared-string))))
+    (lambda (compared-symbol)
+      (eqv? operator compared-symbol))))
 
 
 ;; ****************************************** Expresiones or ******************************************
 
 ;; datatype d-or
 ;; Representa una expresión or.
-;; <or-exp> := <int> | <or-exp> "OR" <or-exp>
+;; <or-exp> := <int> | <or-exp> 'OR <or-exp>
 ;;
 ;; log-operand
 ;; Representa la variante terminal de una expresión or, que es un número (en últimas un operador lógico).
 ;;
 ;; d-or-exp
-;; Representa la variante recursiva de una expresión or, que es una expresión or seguida del string "OR" y otra expresión or.
+;; Representa la variante recursiva de una expresión or, que es una expresión or seguida del símbolo 'OR y otra expresión or.
 
 (define-datatype d-or d-or?
   (log-operand (operand number?))
-  (d-or-exp (operand d-or?) (operator (eqv-operator? "OR")) (exp d-or?)))
+  (d-or-exp (operand d-or?) (operator (eqv-operator? 'OR)) (exp d-or?)))
 
 
 ;; ****************************************** Expresiones and ******************************************
 
 ;; datatype d-and
 ;; Representa una expresión and.
-;; <and-exp> := <or-exp> | <and-exp> "AND" <and-exp>
+;; <and-exp> := <or-exp> | <and-exp> 'AND <and-exp>
 ;;
 ;; and-operand
 ;; Representa la variante terminal de una expresión and, que es una expresión or.
 ;;
 ;; d-and-exp
-;; Representa la variante recursiva de una expresión and, que es una expresión and seguida del string "AND" y otra expresión and.
+;; Representa la variante recursiva de una expresión and, que es una expresión and seguida del símbolo 'AND y otra expresión and.
 
 (define-datatype d-and d-and?
   (and-operand (exp d-or?))
-  (d-and-exp (exp1 d-and?) (operator (eqv-operator? "AND")) (exp2 d-and?)))
+  (d-and-exp (exp1 d-and?) (operator (eqv-operator? 'AND)) (exp2 d-and?)))
 
 
 ;; ****************************************** Expresiones fnc ******************************************
 
 ;; datatype d-fnc
 ;; Representa una expresión fnc.
-;; <fnc-exp> := "FNC" <int> (<and-exp>)
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
 ;;
 ;; d-fnc-exp
-;; Representa la única variante de una expresión fnc, que es el string "FNC" seguido de un número y una expresión and.
+;; Representa la única variante de una expresión fnc, que es el símbolo 'FNC seguido de un número y una expresión and.
 
 (define-datatype d-fnc d-fnc?
-  (d-fnc-exp (intro (eqv-operator? "FNC")) (num-var number?) (exp d-and?)))
+  (d-fnc-exp (intro (eqv-operator? 'FNC)) (num-var number?) (exp d-and?)))
 
 
 ;; ################################## Funciones Parse y Unparse ###############################
@@ -365,10 +397,10 @@ Christian Vargas 2179172
 ;; 2) Después valida si la expresión or tiene un solo elemento, en cuyo caso retorna un log-operand con ese elemento
 ;; (variante terminal de la representación basada en datatypes).
 ;; 3) Finalmente si la expresión or tiene más de un elemento, retorna un d-or-exp con el log-operand del primer elemento,
-;; el string "OR" y el resultado de aplicar la función PARSEOR a la expresión or que se encuentra después del string "OR"
-;;(variante recursiva de la representación basada en datatypes).
+;; el símbolo 'OR y el resultado de aplicar la función PARSEOR a la expresión or que se encuentra después del símbolo 'OR
+;; (variante recursiva de la representación basada en datatypes).
 ;;
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define PARSEOR
   (lambda (exp)
@@ -385,11 +417,14 @@ Christian Vargas 2179172
 
 ;; Pruebas
 (define parseor1 (PARSEOR '(1)))
-(define parseor2 (PARSEOR '(1 "OR" 3 "OR" 2)))
-(define parseor3 (PARSEOR '(1 "OR" 2 "OR" -3 "OR" 4 "OR" -5)))
+(define parseor2 (PARSEOR '(1 OR 3 OR 2)))
+(define parseor3 (PARSEOR '(1 OR 2 OR -3 OR 4 OR -5)))
 parseor1
 parseor2
 parseor3
+(eqv? (d-or? parseor1) #t)
+(eqv? (d-or? parseor2) #t)
+(eqv? (d-or? parseor3) #t)
 
 
 ;; PARSEAND:  and-exp -> d-and
@@ -399,11 +434,11 @@ parseor3
 ;; 2) Después valida si la expresión and tiene un solo elemento, en cuyo caso retorna un and-operand con ese elemento
 ;; (variante terminal de la representación basada en datatypes).
 ;; 3) Finalmente si la expresión and tiene más de un elemento, retorna un d-and-exp con el and-operand del primer elemento,
-;; el string "AND" y el resultado de aplicar la función PARSEAND a la expresión and que se encuentra después del string "AND"
-;;(variante recursiva de la representación basada en datatypes).
+;; el símbolo 'AND y el resultado de aplicar la función PARSEAND a la expresión and que se encuentra después del símbolo 'AND
+;; (variante recursiva de la representación basada en datatypes).
 ;;
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define PARSEAND
   (lambda (exp)
@@ -420,13 +455,17 @@ parseor3
 
 ;; Pruebas
 (define parseand1 (PARSEAND '((1))))
-(define parseand2 (PARSEAND '((1 "OR" 2))))
-(define parseand3 (PARSEAND '((1) "AND" (2))))
-(define parseand4 (PARSEAND '((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5))))
+(define parseand2 (PARSEAND '((1 OR 2))))
+(define parseand3 (PARSEAND '((1) AND (2))))
+(define parseand4 (PARSEAND '((1 OR 2) AND (3 OR -4 OR 5))))
 parseand1
 parseand2
 parseand3
 parseand4
+(eqv? (d-and? parseand1) #t)
+(eqv? (d-and? parseand2) #t)
+(eqv? (d-and? parseand3) #t)
+(eqv? (d-and? parseand4) #t)
 
 
 ;; PARSEBNF:  fnc-exp -> d-fnc
@@ -435,31 +474,40 @@ parseand4
 ;; Convierte la expresión and de la expresión fnc a una expresión and basada en datatypes 
 ;; usando la función PARSEAND.
 ;;
-;; <fnc-exp> := "FNC" <int> (<and-exp>)
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define PARSEBNF
   (lambda (exp)
-    (d-fnc-exp (car exp) (cadr exp) (PARSEAND (caddr exp)))))
+    (if (not (fnc-exp? exp))
+        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una expresión FNC" exp)
+        (d-fnc-exp (car exp) (cadr exp) (PARSEAND (caddr exp))))))
 
 ;; Pruebas
-(define parsebnf1 (PARSEBNF '("FNC" 1  ((1)))))
-(define parsebnf2 (PARSEBNF '("FNC" 2  ((1 "OR" 2)))))
-(define parsebnf3 (PARSEBNF '("FNC" 2  ((1) "AND" (2)))))
-(define parsebnf4 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5)))))
-(define parsebnf5 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5) "AND" (3 "OR" -4)))))
-(define parsebnf6 (PARSEBNF '("FNC" 5  ((1 "OR" 2) "AND" (3 "OR" -4 "OR" 5) "AND" (3 "OR" -4) "AND" (3 "OR" -4)))))
+(define parsebnf1 (PARSEBNF '(FNC 1  ((1)))))
+(define parsebnf2 (PARSEBNF '(FNC 2  ((1 OR 2)))))
+(define parsebnf3 (PARSEBNF '(FNC 2  ((1) AND (2)))))
+(define parsebnf4 (PARSEBNF '(FNC 5  ((1 OR 2) AND (3 OR -4 OR 5)))))
+(define parsebnf5 (PARSEBNF '(FNC 5  ((1 OR 2) AND (3 OR -4 OR 5) AND (3 OR -4)))))
+(define parsebnf6 (PARSEBNF '(FNC 5  ((1 OR 2) AND (3 OR -4 OR 5) AND (3 OR -4) AND (3 OR -4)))))
 parsebnf1
 parsebnf2
 parsebnf3
 parsebnf4
 parsebnf5
 parsebnf6
+(eqv? (d-fnc? parsebnf1) #t)
+(eqv? (d-fnc? parsebnf2) #t)
+(eqv? (d-fnc? parsebnf3) #t)
+(eqv? (d-fnc? parsebnf4) #t)
+(eqv? (d-fnc? parsebnf5) #t)
+(eqv? (d-fnc? parsebnf6) #t)
+
 
 ;; ****************************************** Unparsers ******************************************
 
-;; UNPARSEOR:  d-or -> exp-or
+;; UNPARSEOR:  d-or -> or-exp
 ;; Propósito:
 ;; Convierte el arbol de sintaxis abstracta de una expresión or a una expresión or basada en listas.
 ;; 1) Si la exp es un log-operand entonces se crea un lista con el operando que es un numero entero.
@@ -469,7 +517,7 @@ parsebnf6
 ;; la llamda recursiva de UNPARSEOR que por la gramatica sabemos que sera otra expresion d-or,
 ;; por ello no se llama junto a car.
 ;;
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define UNPARSEOR
   (lambda (exp)
@@ -485,6 +533,12 @@ parsebnf6
 (define unparseor1 (UNPARSEOR parseor1))
 (define unparseor2 (UNPARSEOR parseor2))
 (define unparseor3 (UNPARSEOR parseor3))
+unparseor1
+unparseor2
+unparseor3
+(eqv? (or-exp? unparseor1) #t)
+(eqv? (or-exp? unparseor2) #t)
+(eqv? (or-exp? unparseor3) #t)
 
 
 ;; UNPARSEAND:  d-and -> exp-and
@@ -497,8 +551,8 @@ parsebnf6
 ;; El segundo elemento consistira en la lista conformada por el operador y la llamda recursiva de UNPARSEAND que
 ;; por la gramatica sabemos que sera otra expresion d-and, por ello no se llama junto a car.
 ;;
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define UNPARSEAND
   (lambda (exp)
@@ -515,6 +569,14 @@ parsebnf6
 (define unparseand2 (UNPARSEAND parseand2))
 (define unparseand3 (UNPARSEAND parseand3))
 (define unparseand4 (UNPARSEAND parseand4))
+unparseand1
+unparseand2
+unparseand3
+unparseand4
+(eqv? (and-exp? unparseand1) #t)
+(eqv? (and-exp? unparseand2) #t)
+(eqv? (and-exp? unparseand3) #t)
+(eqv? (and-exp? unparseand4) #t)
 
 
 ;; UNPARSEBNF:  d-fnc -> exp-fnc
@@ -523,9 +585,9 @@ parsebnf6
 ;; 1) Si la exp es un d-fnc-exp entonces se crea un lista que contendra el simbolo FNC, el numero de variables
 ;; y la lista resultado de invocar UNPARSEAND exp, ya que por la gramatica sabemos que exp es una expresion d-and.
 ;;
-;; <fnc-exp> := "FNC" <int> (<and-exp>)
-;; <and-exp> := <or-exp> | <or-exp> "AND" <and-exp>
-;; <or-exp> := <int> | <int> "OR" <or-exp>
+;; <fnc-exp> := 'FNC <int> (<and-exp>)
+;; <and-exp> := <or-exp> | <or-exp> 'AND <and-exp>
+;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define UNPARSEBNF
   (lambda (exp)
@@ -541,3 +603,15 @@ parsebnf6
 (define unparsebnf4 (UNPARSEBNF parsebnf4))
 (define unparsebnf5 (UNPARSEBNF parsebnf5))
 (define unparsebnf6 (UNPARSEBNF parsebnf6))
+unparsebnf1
+unparsebnf2
+unparsebnf3
+unparsebnf4
+unparsebnf5
+unparsebnf6
+(eqv? (fnc-exp? unparsebnf1) #t)
+(eqv? (fnc-exp? unparsebnf2) #t)
+(eqv? (fnc-exp? unparsebnf3) #t)
+(eqv? (fnc-exp? unparsebnf4) #t)
+(eqv? (fnc-exp? unparsebnf5) #t)
+(eqv? (fnc-exp? unparsebnf6) #t)
