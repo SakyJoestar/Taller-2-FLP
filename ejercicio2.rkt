@@ -10,89 +10,26 @@ Samuel Galindo 2177491
 Nicolás Herrera 2182551
 Christian Vargas 2179172
 |#
-#|
-Fundamentos de Interpretación y Compilación de Lenguajes de Programación
-750017C - G01
-=======
-Taller 2: Abstracción de datos y sintáxis abstracta
-Ejercicio 1: Gramatica BNF
-
-Autores:
-Samuel Galindo 2177491
-Nicolás Herrera 2182551
-Christian Vargas 2179172
-|#
 
 
 #lang eopl
 
-
-;; ****************************************** Funciones propias ******************************************
-;; length-of-list:  lista -> int
-;; Propósito:
-;; Retorna el número de elementos en una lista.
-;;
-;; <lista> := ( {<SchemeValue>}* )
-
-(define length-of-list
-  (lambda (list-of-values)
-    (if (eqv? list-of-values empty)
-        0
-        (+ 1 (length-of-list (cdr list-of-values))))))
-
-
-;; get-element-at-index:  lista -> SchemeValue
-;; Propósito:
-;; Retorna el elemento en la i-ésima posición de la lista.
-;;
-;; <lista> := ( {<SchemeValue>}* )
-
-(define get-element-at-index
-  (lambda (list-of-elements i)
-    (cond
-
-      [(eqv? list-of-elements empty)
-       (eopl:error 'OutOfBoundError "Index mayor al tamaño de la lista.")]
-
-      [(eqv? i 0)
-       (car list-of-elements)]
-      
-      [else
-        (get-element-at-index (cdr list-of-elements) (- i 1))])))
-
-
-;; own-map: lista -> lista
-;; Propósito:
-;; Implementación propia de la función map para listas.
-;; Retorna una lista con los resultados de aplicar la función pasada como argumento a cada elemento de la lista pasada como argumento.
-;;
-;; <lista> := ( {<SchemeValue>}* )
-
-(define own-map
-  (lambda (func list-of-elements)
-    (if (null? list-of-elements)
-        empty
-        (cons (func (car list-of-elements)) (own-map func (cdr list-of-elements))))))
-
-;; Pruebas
-(own-map (lambda (x) (* 2 x)) '(1 2 3 4))
-(own-map (lambda (x) (+ 100 x)) '(1 2 3 4))
+(require "ejercicio1.rkt")
+(provide (all-defined-out))
 
 
 
-;; ################################## Representación basada en listas ##################################
+;; ################################## Funciones Parse y Unparse ###############################
 
-;; ****************************************** Expresiones or ******************************************
+;; ****************************************** Parsers para síntaxis abstracta basada en listas ******************************************
 
 ;; or-exp?:  lista -> boolean
 ;; Propósito:
-;; Identifica si una lista está construida con la estructura definida para una expresión or.
+;; Identifica si una lista está construida usando la sintaxis concreta definida para una expresión or.
 ;; 1) Primero evalúa si la expresión pasada como argumento es una lista no vacía.
 ;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso verifica que sea un número.
 ;; 3) Finalmente si la lista tiene más de un elemento, verifica que el primer elemento sea un número,
 ;; que el segundo sea el símbolo 'OR, y que el resto de la lista no sea vacía y sea una expresión or.
-;;
-;; <or-exp> := <int> | <int> 'OR <or-exp>
 
 (define or-exp?
   (lambda (exp)
@@ -115,51 +52,50 @@ Christian Vargas 2179172
         (not (null? (cddr exp)))
         (or-exp? (cddr exp)))])))
 
+;; Pruebas
+(eqv? (or-exp? '(1)) #t)
+(eqv? (or-exp? '(1 OR -1)) #t)
+(eqv? (or-exp? '(1 OR -1 OR -5)) #t)
+(eqv? (or-exp? '()) #f)
+(eqv? (or-exp? '(1 OR -1 -5)) #f)
+(eqv? (or-exp? '(1 OR -1 OR (-5 OR 2))) #f)
+(eqv? (or-exp? '(1 OR)) #f)
 
-;; or-exp:  lista -> or-exp
+
+;; PARSEOR:  lista -> or-exp
 ;; Propósito:
-;; Construye una expresión or a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión or.
+;; Construye el árbol de síntaxs abstracta basado en listas para una expresión or a partir de una lista que cumpla con la gramática.
+;; 1) Primero evalúa si la lista pasada como argumento sigue la sintaxis concreta definida para una expresión or.
 ;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso retorna la lista con este número.
 ;; 3) Finalmente si la lista tiene más de un elemento, retorna una lista con el primer elemento y
-;; el resultado de aplicar recursivamente el constructor or-exp al resto de la lista.
-;;
-;; <or-exp> := <int> | <int> 'OR <or-exp>
+;; el resultado de aplicar recursivamente el PARSEOR al resto de la lista.
 
-(define or-exp
+(define PARSEOR
   (lambda (exp)
     (cond
 
       [(not (or-exp? exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <or-exp> := <int> | <int> OR <or-exp>" exp)]
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <or> := <int> | <int> 'OR <or>" exp)]
 
       [(eqv? (length-of-list exp) 1)
        (cons (car exp) empty)]
 
       [else
-       (cons (car exp) (or-exp (cddr exp)))])))
+       (cons (car exp) (PARSEOR (cddr exp)))])))
 
+;; Pruebas
+(PARSEOR '(1))
+(PARSEOR '(1 OR -2))
+(PARSEOR '(1 OR -2 OR 3 OR -4))
+; Reconocimiento de entradas no válidas
+;(PARSEOR  '())
+;(PARSEOR '(1 OR not-a-number))
+;(PARSEOR  '(1 OR))
 
-;; or-exp->varlist:  lista -> or-exp
-;; Propósito:
-;; Retorna una lista con los números que conforman la expresión or pasada como argumento.
-;; Como la sintáxis abstracta basada en listas que escogimos define una expresión or como una lista
-;; de números, esta función llama al constructor or-exp, que se encarga de realizar las validaciones
-;; y construcciones necesarias.
-;;
-;; <or-exp> := <int> | <int> 'OR <or-exp>
-
-(define or-exp->varlist
-  (lambda (exp)
-    (or-exp exp)))
-
-
-
-;; ****************************************** Expresiones and ******************************************
 
 ;; and-exp?:  lista -> boolean
 ;; Propósito:
-;; Identifica si una lista está construida con la estructura definida para una expresión and.
+;; Identifica si una lista está construida usando la sintaxis concreta definida para una expresión and.
 ;; 1) Primero evalúa si la expresión pasada como argumento es una lista no vacía.
 ;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso verifica que sea una expresión or.
 ;; 3) Finalmente si la lista tiene más de un elemento, verifica que el primer elemento sea una expresión or,
@@ -185,50 +121,54 @@ Christian Vargas 2179172
         (not (null? (cddr exp)))
         (and-exp? (cddr exp)))])))
 
+;; Pruebas
+(eqv? (and-exp? '((1)) ) #t)
+(eqv? (and-exp? '((1 OR -1)) ) #t)
+(eqv? (and-exp? '((1 OR -1 OR 3) AND (2)) ) #t)
+(eqv? (and-exp? '((1 OR -1) AND (2 OR -2)) ) #t)
+(eqv? (and-exp? '() ) #f)
+(eqv? (and-exp? '(()) ) #f)
+(eqv? (and-exp? '((1 OR -1 OR)) ) #f)
+(eqv? (and-exp? '((1 OR -1) AND (2 2)) ) #f)
+(eqv? (and-exp? '((1 OR -1) AND (2 OR -2) AND) ) #f)
 
-;; and-exp:  lista -> and-exp
+
+;; PARSEAND:  lista -> and-exp
 ;; Propósito:
-;; Construye una expresión and a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión and.
+;; Construye el árbol de síntaxs abstracta basado en listas para una expresión and a partir de una lista que cumpla con la gramática.
+;; 1) Primero evalúa si la lista pasada como argumento sigue la sintaxis concreta definida para una expresión and.
 ;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso retorna la lista con este elemento.
 ;; 3) Finalmente si la lista tiene más de un elemento, retorna una lista con el primer elemento y
-;; el resultado de aplicar recursivamente el constructor and-exp al resto de la lista.
-;;
-;; <and-exp> := (<or-exp>) | (<or-exp>) AND <and-exp>
-;; <or-exp> := <int> | <int> 'OR <or-exp>
+;; el resultado de aplicar recursivamente el PARSEAND al resto de la lista.
 
-(define and-exp
+(define PARSEAND
   (lambda (exp)
     (cond
 
       [(not (and-exp? exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <and-exp> := (<or-exp>) | (<or-exp>) AND <and-exp>" exp)]
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <and> := (<or>) | (<or>) 'AND <and>" exp)]
 
       [(eqv? (length-of-list exp) 1)
        (cons (or-exp (car exp)) empty)]
 
       [else
-       (cons (or-exp (car exp)) (and-exp (cddr exp)))])))
+       (cons (or-exp (car exp)) (PARSEAND (cddr exp)))])))
 
+;; Pruebas
+(PARSEAND '((1)))
+(PARSEAND '((1 OR -2)))
+(PARSEAND '((1 OR -2) AND (3 OR -4)))
+(PARSEAND '((1 OR -2) AND (3 OR -4) AND (-5)))
+; Reconocimiento de entradas no válidas
+;(PARSEAND  '())
+;(PARSEAND '(1))
+;(PARSEAND '(()))
+;(PARSEAND '((1 OR -2) AND (3 OR)))
 
-;; and-exp->clauses:  lista -> and-exp
-;; Propósito:
-;; Retorna una lista con las expresiones or que conforman la expresión and pasada como argumento.
-;; Como la sintáxis abstracta basada en listas que escogimos define una expresión and como una lista
-;; de listas de números, esta función llama al constructor and-exp, que se encarga de realizar las validaciones
-;; y construcciones necesarias.
-
-(define and-exp->clauses
-  (lambda (exp)
-    (and-exp exp)))
-
-
-
-;; ****************************************** Expresiones fnc ******************************************
 
 ;; fnc-exp?:  lista -> boolean
 ;; Propósito:
-;; Identifica si una lista está construida con la estructura definida para una expresión fnc.
+;; Identifica si una lista está construida usando la sintaxis concreta definida para una expresión fnc.
 ;; 1) Primero evalúa si la expresión pasada como argumento es una lista no vacía.
 ;; 2) Después evalúa si la lista tiene tres elementos, en cuyo caso verifica que el primero sea el símbolo 'FNC,
 ;; que el segundo sea un número, y que el tercero sea una expresión and.
@@ -247,288 +187,35 @@ Christian Vargas 2179172
          (number? (cadr exp))
          (and-exp? (caddr exp))))))
 
-
-;; fnc-exp:  lista -> fnc-exp
-;; Propósito:
-;; Construye una expresión fnc a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión fnc.
-;; 2) Si la verificación es correcta, entonces retorna una lista con el segundo y tercer elemento de la lista pasada como argumento.
-;;
-;; <fnc-exp> := FNC <int> (<and-exp>)
-;; <and-exp> := (<or-exp>) | (<or-exp>) AND <and-exp>
-;; <or-exp> := <int> | <int> 'OR <or-exp>
-
-(define fnc-exp
-  (lambda (exp)
-    (if (not (fnc-exp? exp))
-        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <fnc-exp> := FNC <int> (<and-exp>)" exp)
-        (cons (cadr exp)(cddr exp)))))
-
-
-;; fnc-exp->var:  lista -> int
-;; Propósito:
-;; Retorna el número de variables que conforman la expresión fnc pasada como argumento.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión fnc.
-;; 2) Si se cumple lo anterior, retorna el segundo elemento de la lista pasada como argumento, que es el número de variables
-;; que dentro de la expresión fnc.
-;;
-;; <fnc-exp> := FNC <int> (<and-exp>)
-
-(define fnc-exp->var
-  (lambda (exp)
-    (if (not (fnc-exp? exp))
-        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <fnc-exp> := FNC <int> (<and-exp>)" exp)
-        (cadr exp))))
-
-
-;; fnc-exp->clauses:  lista -> and-exp
-;; Propósito:
-;; Retorna una lista con las expresiones or que conforman la expresión and de la expresión fnc pasada como argumento.
-;; Como la sintáxis abstracta basada en listas que escogimos define una expresión and como una lista
-;; de listas de números, esta función llama al constructor and-exp sobre el tercer elemento de la expresión fnc,
-;; y este constructor se encarga de realizar las validaciones y construcciones necesarias.
-
-(define fnc-exp->clauses
-  (lambda (exp)
-    (if (not (fnc-exp? exp))
-        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <fnc-exp> := FNC <int> (<and-exp>)" exp)
-        (and-exp->clauses (caddr exp)))))
-
-
-
-;; ################################## Representación basada en datatypes ##################################
-
-;; ****************************************** Expresiones or ******************************************
-
-;; list-of-numbers?:  lista -> boolean
-;; Propósito:
-;; Predicado que verifica si una lista es no vacía y está compuesta unicamente por números.
-;;
-;; <lista-de-numeros> := ( {<int>}+ )
-
-(define list-of-numbers?
-  (lambda (exp)
-    (and
-     ((list-of number?) exp)
-     (not (null? exp)))))
-
-
-;; datatype-or-exp
-;; Representación de una expresión or como un datatype.
-;; Construye el árbol de sintáxis abstracta basado en datatypes para una expresión or a partir de una lista de números.
-
-(define-datatype datatype-or-exp datatype-or-exp?
-  (d-or-exp (exp list-of-numbers?)))
-
-
-;; ****************************************** Expresiones and ******************************************
-
-;; list-of-or-exps?:  lista -> boolean
-;; Propósito:
-;; Predicado que verifica si una lista es no vacía y está compuesta unicamente por expresiones or basadas en datatypes.
-;;
-;; <lista-de-expresiones-or> := ( {<datatype-or-exp>}+ )
-
-(define list-of-or-exps?
-  (lambda (exp)
-    (and
-     ((list-of datatype-or-exp?) exp)
-     (not (null? exp)))))
-
-
-;; datatype-and-exp
-;; Representación de una expresión and como un datatype.
-;; Construye el árbol de sintáxis abstracta basado en datatypes para una expresión and
-;; a partir de una lista de expresiones or basadas en datatypes.
-
-(define-datatype datatype-and-exp datatype-and-exp?
-  (d-and-exp (exp list-of-or-exps?)))
-
-
-;; ****************************************** Expresiones fnc ******************************************
-
-;; datatype-fnc-exp
-;; Representación de una expresión fnc como un datatype.
-;; Construye el árbol de sintáxis abstracta basado en datatypes para una expresión fnc
-;; a partir de un número y una expresión and basada en datatypes.
-
-(define-datatype datatype-fnc-exp datatype-fnc-exp?
-  (d-fnc-exp (num-of-var number?) (exp datatype-and-exp?)))
-
-
-
-;; ################################## Funciones Parse y Unparse ###############################
-
-;; ****************************************** Parsers para síntaxis abstracta basada en listas ******************************************
-
-;; PARSEOR-list:  lista -> or-exp
-;; Propósito:
-;; Construye el árbol de síntaxs abstracta basado en listas para una expresión or a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión or.
-;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso retorna la lista con este número.
-;; 3) Finalmente si la lista tiene más de un elemento, retorna una lista con el primer elemento y
-;; el resultado de aplicar recursivamente el PARSEOR-list al resto de la lista.
-
-(define PARSEOR-list
-  (lambda (exp)
-    (cond
-
-      [(not (or-exp? exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <or-exp> := <int> | <int> OR <or-exp>" exp)]
-
-      [(eqv? (length-of-list exp) 1)
-       (cons (car exp) empty)]
-
-      [else
-       (cons (car exp) (PARSEOR-list (cddr exp)))])))
-
 ;; Pruebas
-(PARSEOR-list '(1))
-(PARSEOR-list '(1 OR -2))
-(PARSEOR-list '(1 OR -2 OR 3 OR -4))
-
-; Reconocimiento de entradas no válidas
-;(PARSEOR-list  '())
-;(PARSEOR-list '(1 OR not-a-number))
-;(PARSEOR-list  '(1 OR))
+(eqv? (fnc-exp? '(FNC 1 ((1 OR 2)))) #t)
+(eqv? (fnc-exp? '(FNC 1 ((1 OR 2 OR -3) AND (2)))) #t)
+(eqv? (fnc-exp? '(FNC 5 and-exp4)) #t)
+(eqv? (fnc-exp? '()) #f)
+(eqv? (fnc-exp? '(FNC 'not-a-number ((1 OR 2 OR -3) AND (2)))) #f)
+(eqv? (fnc-exp? '(FNC 1 ((1 OR 2 OR -3) AND (2 OR 1) AND (2)) '4th-element)) #f)
 
 
-;; PARSEAND-list:  lista -> and-exp
-;; Propósito:
-;; Construye el árbol de síntaxs abstracta basado en listas para una expresión and a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión and.
-;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso retorna la lista con este elemento.
-;; 3) Finalmente si la lista tiene más de un elemento, retorna una lista con el primer elemento y
-;; el resultado de aplicar recursivamente el PARSEAND-list al resto de la lista.
-
-(define PARSEAND-list
-  (lambda (exp)
-    (cond
-
-      [(not (and-exp? exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <and-exp> := (<or-exp>) | (<or-exp>) AND <and-exp>" exp)]
-
-      [(eqv? (length-of-list exp) 1)
-       (cons (or-exp (car exp)) empty)]
-
-      [else
-       (cons (or-exp (car exp)) (PARSEAND-list (cddr exp)))])))
-
-;; Pruebas
-(PARSEAND-list '((1)))
-(PARSEAND-list '((1 OR -2)))
-(PARSEAND-list '((1 OR -2) AND (3 OR -4)))
-(PARSEAND-list '((1 OR -2) AND (3 OR -4) AND (-5)))
-
-; Reconocimiento de entradas no válidas
-;(PARSEAND-list  '())
-;(PARSEAND-list '(1))
-;(PARSEAND-list '(()))
-;(PARSEAND-list '((1 OR -2) AND (3 OR)))
-
-
-;; PARSEBNF-list:  lista -> fnc-exp
+;; PARSEBNF:  lista -> fnc-exp
 ;; Propósito:
 ;; Construye el árbol de síntaxs abstracta basado en listas para una expresión fnc a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión fnc.
-;; 2) Si la verificación es correcta, entonces retorna una lista con el segundo y tercer elemento de la lista pasada como argumento.
+;; 1) Primero evalúa si la lista pasada como argumento sigue la sintaxis concreta definida para una expresión fnc.
+;; 2) Si la verificación es correcta, entonces retorna una lista con el segundo elemento y el resultado de aplicar
+;; el PARSEAND al tercer elemento.
 
-(define PARSEBNF-list
+(define PARSEBNF
   (lambda (exp) 
     (if (not (list? exp))
-        #f
-        (and
-         (eqv? (length-of-list exp) 3)
-         (eqv? (car exp) 'FNC)
-         (number? (cadr exp))
-         (and-exp? (caddr exp))))))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <fnc> := 'FNC <int> (<and>)" exp)
+       (cons (cadr exp) (PARSEAND (caddr exp))))))
 
 ;; Pruebas
-(PARSEBNF-list '(FNC 1 ((1))))
-(PARSEBNF-list '(FNC 2 ((1 OR -2))))
-(PARSEBNF-list '(FNC 4 ((1 OR -2) AND (3 OR -4))))
-(PARSEBNF-list '(FNC 5 ((1 OR -2) AND (3 OR -4) AND (-5))))
-
+(PARSEBNF '(FNC 1 ((1))))
+(PARSEBNF '(FNC 2 ((1 OR -2))))
+(PARSEBNF '(FNC 4 ((1 OR -2) AND (3 OR -4))))
+(PARSEBNF '(FNC 5 ((1 OR -2) AND (3 OR -4) AND (-5))))
 ; Reconocimiento de entradas no válidas
-;(PARSEBNF-list '())
-;(PARSEBNF-list '(FNC not-a-number ((1 OR -2) AND (3 OR -4))))
-;(PARSEBNF-list '(FNC not-a-number ((1 OR -2) AND (3 OR -4)) '4th-element))
+;(PARSEBNF '())
+;(PARSEBNF '(FNC not-a-number ((1 OR -2) AND (3 OR -4))))
+;(PARSEBNF '(FNC not-a-number ((1 OR -2) AND (3 OR -4)) '4th-element))
 
-
-
-;; ****************************************** Parsers para síntaxis abstracta basada en datatypes ******************************************
-
-;; PARSEOR-datatype:  lista -> d-or-exp
-;; Propósito:
-;; Construye el árbol de síntaxs abstracta basado en datatypes para una expresión or a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión or.
-;; 2) Si la verificación es correcta, entonces retorna el datatype d-or-exp construido a partir de la lista de variables
-;; que conforman la expresión or pasada como argumento.
-
-(define PARSEOR-datatype
-  (lambda (exp)
-   (if (not (or-exp? exp))
-        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <or-exp> := <int> | <int> OR <or-exp>" exp)
-        (d-or-exp (or-exp->varlist exp)))))
-
-;; Pruebas
-(PARSEOR-datatype '(1))
-(PARSEOR-datatype '(1 OR -2))
-(PARSEOR-datatype '(1 OR -2 OR 3 OR -4))
-
-; Reconocimiento de entradas no válidas
-;(PARSEOR-datatype '())
-;(PARSEOR-datatype '(1 OR not-a-number))
-;(PARSEOR-datatype '(1 OR))
-
-
-;; PARSEAND-datatype:  lista -> d-and-exp
-;; Propósito:
-;; Construye el árbol de síntaxs abstracta basado en datatypes para una expresión and a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión and.
-;; 2) Si la verificación es correcta, entonces retorna el datatype d-and-exp construido a partir de la lista de expresiones or
-;; que conforman la expresión and pasada como argumento.
-
-(define PARSEAND-datatype
-  (lambda (exp)
-    (if (not (and-exp? exp))
-
-        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <and-exp> := (<or-exp>) | (<or-exp>) AND <and-exp>" exp)
-        (d-and-exp (own-map d-or-exp (and-exp->clauses exp)) ))))
-
-;; Pruebas
-(PARSEAND-datatype '((1)))
-(PARSEAND-datatype '((1 OR -2)))
-(PARSEAND-datatype '((1 OR -2) AND (3 OR -4)))
-(PARSEAND-datatype '((1 OR -2) AND (3 OR -4) AND (-5)))
-
-; Reconocimiento de entradas no válidas
-;(PARSEAND-datatype '())
-;(PARSEAND-datatype '(1))
-;(PARSEAND-datatype '(()))
-;(PARSEAND-datatype '((1 OR -2) AND (3 OR)))
-
-
-;; PARSEBNF-datatype:  lista -> d-fnc-exp
-;; Propósito:
-;; Construye el árbol de síntaxs abstracta basado en datatypes para una expresión fnc a partir de una lista que cumpla con la gramática.
-;; 1) Primero evalúa si la lista pasada como argumento tiene la estructura definida para una expresión fnc.
-;; 2) Si la verificación es correcta, entonces retorna el datatype d-fnc-exp construido a partir del número de variables
-;; y la expresión and que conforman la expresión fnc pasada como argumento.
-
-(define PARSEBNF-datatype
-  (lambda (exp)
-    (if (not (fnc-exp? exp))
-        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <fnc-exp> := FNC <int> (<and-exp>)" exp)
-        (d-fnc-exp (cadr exp) (PARSEAND-datatype (caddr exp))))))
-
-;; Pruebas
-(PARSEBNF-datatype '(FNC 1 ((1))))
-(PARSEBNF-datatype '(FNC 2 ((1 OR -2))))
-(PARSEBNF-datatype '(FNC 4 ((1 OR -2) AND (3 OR -4))))
-(PARSEBNF-datatype '(FNC 5 ((1 OR -2) AND (3 OR -4) AND (-5))))
-
-; Reconocimiento de entradas no válidas
-;(PARSEBNF-datatype '())
-;(PARSEBNF-datatype '(FNC not-a-number ((1 OR -2) AND (3 OR -4))))
-;(PARSEBNF-datatype '(FNC not-a-number ((1 OR -2) AND (3 OR -4)) '4th-element))
