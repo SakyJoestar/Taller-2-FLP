@@ -532,3 +532,67 @@ Christian Vargas 2179172
 ;(PARSEBNF-datatype '())
 ;(PARSEBNF-datatype '(FNC not-a-number ((1 OR -2) AND (3 OR -4))))
 ;(PARSEBNF-datatype '(FNC not-a-number ((1 OR -2) AND (3 OR -4)) '4th-element))
+
+;; ****************************************** Unparsers para síntaxis abstracta basada en listas ******************************************
+
+;; UNPARSEOR:  or-exp -> lista
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta basado en listas de una expresión or a una lista que cumpla con la gramática.
+;; 1) Si la exp tiene un solo elemento entonces se retorna exp (Que es una lista con un unico entero).
+;; 2) En caso contrario entonces se crea una lista donde el primer elemento es el primer elemento de exp el cual es un numero entero.
+;; El segundo elemento consistira en la lista conformada por el simbolo OR y la llamada recursiva de UNPARSEOR pasando como argumento
+;; la cola de exp. Este proceso continuara hasta que exp quede con un solo elemento. Momento en el cual se construira la lista con los
+;; cons.
+
+(define UNPARSEOR
+  (lambda (exp)
+    (if (eqv? 1 (length-of-list exp))
+        exp
+        (cons (car exp)
+              (cons 'OR (UNPARSEOR (cdr exp)))))))
+
+;; Pruebas
+(UNPARSEOR (PARSEOR-datatype '(1)))
+(UNPARSEOR (PARSEOR-datatype '(1 OR -2)))
+(UNPARSEOR (PARSEOR-datatype '(1 OR -2 OR 3 OR -4)))
+
+
+;; UNPARSEAND:  and-exp -> list
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta basado en listas de una expresión and a una lista que cumpla con la gramática.
+;; 1) Si la exp tiene un solo elemento entonces retorna la lista resultante de invocar UNPARSEOR pasandole como parametro el
+;; primer elemento de exp (Sabemos que cada lista que conforma a exp es un lista, que representa una expresio or).
+;; 2) En caso contrario entonces se crea una lista donde el primer elemento es el resultado de invocar UNPARSER OR pasandoles como
+;; parametro el primer elemento de exp el cual es un expresion or. El segundo elemento consistira en la lista conformada por el simbolo
+;; AND y la llamada recursiva de UNPARSEAND pasando como argumento la cola de exp. Este proceso continuara hasta que exp quede con un
+;; solo elemento. Momento en el cual se construira la lista con los cons.
+
+(define UNPARSEAND
+  (lambda (exp)
+    (if (eqv? 1 (length-of-list exp))
+        (list (UNPARSEOR (car exp)))
+        (cons (UNPARSEOR (car exp))
+              (cons 'AND (UNPARSEAND (cdr exp)))))))
+
+;; Pruebas
+(UNPARSEAND (PARSEAND-list '((1))))
+(UNPARSEAND (PARSEAND-list '((1 OR -2))))
+(UNPARSEAND (PARSEAND-list '((1 OR -2) AND (3 OR -4))))
+(UNPARSEAND (PARSEAND-list '((1 OR -2) AND (3 OR -4) AND (-5))))
+
+
+;; UNPARSEBNF:  fnc-exp -> list
+;; Propósito:
+;; Convierte el arbol de sintaxis abstracta de una expresión fnc basado en listas a una lista que cumpla con la gramática.
+;; 1) Crea un lista que contendra el simbolo FNC, el numero de variables (Que sera el primer elemento de exp)
+;; y la lista resultado de invocar UNPARSEAND exp a la cola de exp, ya que por la gramatica sabemos que es una expresion d-and.
+
+(define UNPARSEBNF
+  (lambda (exp)
+    (list 'FNC (car exp)(UNPARSEAND (cadr exp)))))
+
+;; Pruebas
+(UNPARSEBNF (PARSEBNF-list '(FNC 1 ((1)))))
+(UNPARSEBNF (PARSEBNF-list '(FNC 2 ((1 OR -2)))))
+(UNPARSEBNF (PARSEBNF-list '(FNC 4 ((1 OR -2) AND (3 OR -4)))))
+(UNPARSEBNF (PARSEBNF-list '(FNC 5 ((1 OR -2) AND (3 OR -4) AND (-5)))))
