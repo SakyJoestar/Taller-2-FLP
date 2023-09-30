@@ -11,5 +11,8 @@ Nicolás Herrera 2182551
 Christian Vargas 2179172
 |#
 
+
 #lang eopl
 
+(require "ejercicio1.rkt")
+(require "ejercicio2.rkt")

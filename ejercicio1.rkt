@@ -2,7 +2,7 @@
 Fundamentos de Interpretación y Compilación de Lenguajes de Programación
 750017C - G01
 =======
-Taller 2: Abstracción de datos y sintáxis abstracta
+Taller 2: Abstracción de datos y sintaxis abstracta
 Ejercicio 1: Gramatica BNF
 
 Autores:
@@ -19,12 +19,12 @@ Christian Vargas 2179172
 ;; ################################## GRAMÁTICA ##################################
 ;; La gramática para expresiones lógica en forma normal conjuntiva (FNC) que escogimos es la siguiente:
 ;; 
-;; Sintáxis concreta:
+;; Sintaxis concreta:
 ;; <fnc> := 'FNC <int> (<and>)
 ;; <and> := (<or>) | (<or>) 'AND <and>
 ;; <or> := <int> | <int> 'OR <or>
 ;;
-;; Sintáxis abstracta basada en listas:
+;; Sintaxis abstracta basada en listas:
 ;; <fnc-exp> := <int> (<and-exp>)
 ;; <and-exp> := (<or-exp>) | (<or-exp>) <and-exp> 
 ;; <or-exp> := <int> | <int> <or-exp>
@@ -99,7 +99,7 @@ Christian Vargas 2179172
 (eqv? (list-of-numbers? '(1 not-a-number)) #f)
 
 
-;; list-of-list-of-numbers?:  lista -> boolean
+;; list-list-of-numbers?:  lista -> boolean
 ;; Propósito:
 ;; Predicado que verifica si una lista es no vacía y está compuesta unicamente por listas de números.
 ;;
@@ -128,8 +128,8 @@ Christian Vargas 2179172
 
 ;; or-exp:  lista-de-numeros -> or-exp
 ;; Propósito:
-;; Construye el árbol de sintáxis abstracta basado en listas para una expresión or a partir de una lista de números.
-;; Como la sintáxis abstracta basada en listas que escogimos para las expresiones or es justamente una lista de números,
+;; Construye el árbol de sintaxis abstracta basado en listas para una expresión or a partir de una lista de números.
+;; Como la sintaxis abstracta basada en listas que escogimos para las expresiones or es justamente una lista de números,
 ;; entonces la función or-exp retorna la lista de números que recibe como entrada.
 
 (define or-exp
@@ -148,7 +148,7 @@ or-exp3
 ;; or-exp->varlist:  or-exp -> lista-de-numeros
 ;; Propósito:
 ;; Retorna una lista con los números que conforman la expresión or pasada como argumento.
-;; Como la sintáxis abstracta basada en listas que escogimos define una expresión or como una lista
+;; Como la sintaxis abstracta basada en listas que escogimos define una expresión or como una lista
 ;; de números, entonces esta función retorna la lista de números que recibe como entrada.
 
 (define or-exp->varlist
@@ -166,8 +166,8 @@ or-exp3
 
 ;; and-exp:  lista-lista-de-numeros -> and-exp
 ;; Propósito:
-;; Construye el árbol de sintáxis abstracta basado en listas para una expresión and a partir de una lista de listas de números.
-;; Como la sintáxis abstracta basada en listas que escogimos para las expresiones and es justamente una lista de listas de números,
+;; Construye el árbol de sintaxis abstracta basado en listas para una expresión and a partir de una lista de listas de números.
+;; Como la sintaxis abstracta basada en listas que escogimos para las expresiones and es justamente una lista de listas de números,
 ;; entonces la función and-exp retorna la lista de listas que recibe como entrada.
 
 (define and-exp
@@ -188,7 +188,7 @@ and-exp4
 ;; and-exp->clauses:  and-exp -> lista-lista-de-numeros
 ;; Propósito:
 ;; Retorna una lista con las listas de números que conforman la expresión and pasada como argumento.
-;; Como la sintáxis abstracta basada en listas que escogimos define una expresión and como una lista
+;; Como la sintaxis abstracta basada en listas que escogimos define una expresión and como una lista
 ;; de listas de números, entonces esta función retorna la lista que recibe como entrada.
 
 (define and-exp->clauses
@@ -207,9 +207,9 @@ and-exp4
 
 ;; fnc-exp:  int X lista-lista-de-numeros -> fnc-exp
 ;; Propósito:
-;; Construye el árbol de sintáxis abstracta basado en listas para una expresión fnc a partir de un número y
+;; Construye el árbol de sintaxis abstracta basado en listas para una expresión fnc a partir de un número y
 ;; una lista de listas de números que representan una expresión and.
-;; Como la sintáxis abstracta basada en listas que escogimos para las expresiones fnc es una lista de dos elementos,
+;; Como la sintaxis abstracta basada en listas que escogimos para las expresiones fnc es una lista de dos elementos,
 ;; donde el primer elemento es un número y el segundo elemento es una lista de listas de números, entonces la función
 ;; fnc-exp retorna una lista con los dos argumentos que recibe como entrada.
 
@@ -231,7 +231,7 @@ fnc-exp4
 ;; fnc-exp->var:  fnc-exp -> int
 ;; Propósito:
 ;; Retorna el número de variables que conforman la expresión fnc pasada como argumento.
-;; Como la sintáxis abstracta basada en listas que escogimos define una expresión fnc como una lista
+;; Como la sintaxis abstracta basada en listas que escogimos define una expresión fnc como una lista
 ;; de dos elementos, donde el primer elemento es el número de variables y el segundo elemento es una lista de listas de números
 ;; que representan una expresión and, entonces esta función retorna el primer elemento de la expresión fnc que recibe como entrada.
 
@@ -249,7 +249,7 @@ fnc-exp4
 ;; fnc-exp->clauses:  fnc-exp -> lista-lista-de-numeros
 ;; Propósito:
 ;; Retorna una lista con las listas de números que conforman la expresión and que hace parte de la expresión fnc
-;; pasada como argumento. Como la sintáxis abstracta basada en listas que escogimos define una expresión fnc como una lista
+;; pasada como argumento. Como la sintaxis abstracta basada en listas que escogimos define una expresión fnc como una lista
 ;; de dos elementos, donde el primer elemento es el número de variables y el segundo elemento es la expresión and, entonces
 ;; esta función retorna el segundo elemento de la expresión fnc que recibe como entrada.
 
@@ -271,7 +271,7 @@ fnc-exp4
 
 ;; datatype-or
 ;; Representación de una expresión or como un datatype.
-;; Construye el árbol de sintáxis abstracta basado en datatypes para una expresión or a partir de una lista de números.
+;; Construye el árbol de sintaxis abstracta basado en datatypes para una expresión or a partir de una lista de números.
 
 (define-datatype datatype-or-exp datatype-or-exp?
   (d-or-exp (exp list-of-numbers?)))
@@ -315,7 +315,7 @@ d-or-exp3
 
 ;; datatype-and-exp
 ;; Representación de una expresión and como un datatype.
-;; Construye el árbol de sintáxis abstracta basado en datatypes para una expresión and
+;; Construye el árbol de sintaxis abstracta basado en datatypes para una expresión and
 ;; a partir de una lista de expresiones or basadas en datatypes.
 
 (define-datatype datatype-and-exp datatype-and-exp?
@@ -339,7 +339,7 @@ d-and-exp3
 
 ;; datatype-fnc-exp
 ;; Representación de una expresión fnc como un datatype.
-;; Construye el árbol de sintáxis abstracta basado en datatypes para una expresión fnc
+;; Construye el árbol de sintaxis abstracta basado en datatypes para una expresión fnc
 ;; a partir de un número y una expresión and basada en datatypes.
 
 (define-datatype datatype-fnc-exp datatype-fnc-exp?
