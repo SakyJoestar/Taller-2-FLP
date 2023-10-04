@@ -17,6 +17,45 @@ Christian Vargas 2179172
 (require "ejercicio1.rkt")
 (provide (all-defined-out))
 
+;; ****************************************** Funciones propias ******************************************
+
+;; my-map: lista -> lista
+;; Propósito:
+;; Implementación propia de la función map para listas.
+;; Retorna una lista con los resultados de aplicar la función pasada como argumento a cada elemento de la lista pasada como argumento.
+;;
+;; <lista> := ( {<SchemeValue>}* )
+
+(define my-map
+  (lambda (func list-of-elements)
+    (if (null? list-of-elements)
+        empty
+        (cons (func (car list-of-elements)) (my-map func (cdr list-of-elements))))))
+
+;; Pruebas
+(my-map (lambda (x) (* 2 x)) '(1 2 3 4))
+(my-map (lambda (x) (+ 100 x)) '(1 2 3 4))
+(my-map (lambda (x) (if (even? x) x (* 10 x))) '(1 2 3 4))
+
+
+;; ignore-outer-symbols:  lista -> lista
+;; Propósito:
+;; Dado una lista escrita con la sintaxis concreta definida para expresiones or o and, 
+;; retorna una lista con los elementos de la lista pasada como argumento que no son símbolos.
+;; Solo ignora los símbolos que están en el nivel más externo de la lista.
+
+(define ignore-outer-symbols
+  (lambda (exp)
+    (if (eqv? (length-of-list exp) 1)
+        (cons (car exp) empty)
+        (cons (car exp) (ignore-outer-symbols (cddr exp))))))
+
+;; Pruebas
+(ignore-outer-symbols '(1))
+(ignore-outer-symbols '(1 OR -2))
+(ignore-outer-symbols '((1 OR -2) AND (3 OR -4)))
+(ignore-outer-symbols '((1 OR -2) AND (3 OR -4) AND (-5)))
+
 
 
 ;; ################################## Funciones Parse y Unparse ###############################
@@ -66,22 +105,14 @@ Christian Vargas 2179172
 ;; Propósito:
 ;; Construye el árbol de síntaxs abstracta basado en listas para una expresión or a partir de una lista que cumpla con la gramática.
 ;; 1) Primero evalúa si la lista pasada como argumento sigue la sintaxis concreta definida para una expresión or.
-;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso retorna la lista con este número.
-;; 3) Finalmente si la lista tiene más de un elemento, retorna una lista con el primer elemento y
-;; el resultado de aplicar recursivamente el PARSEOR al resto de la lista.
+;; 2) En caso de que la verificación sea correcta,  entonces ignora los símbolos 'OR de la lista, quedandose unicamnete con los números.
+;; A partir de esta lista de números construye el árbol de sintaxis abstracta basado en listas, usando el constructor or-exp.
 
 (define PARSEOR
   (lambda (exp)
-    (cond
-
-      [(not (or-exp? exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <or> := <int> | <int> 'OR <or>" exp)]
-
-      [(eqv? (length-of-list exp) 1)
-       (cons (car exp) empty)]
-
-      [else
-       (cons (car exp) (PARSEOR (cddr exp)))])))
+    (if (not (or-exp? exp))
+       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <or> := <int> | <int> 'OR <or>" exp)
+       (or-exp (ignore-outer-symbols exp)))))
 
 ;; Pruebas
 (PARSEOR '(1))
@@ -138,23 +169,15 @@ Christian Vargas 2179172
 ;; Propósito:
 ;; Construye el árbol de síntaxs abstracta basado en listas para una expresión and a partir de una lista que cumpla con la gramática.
 ;; 1) Primero evalúa si la lista pasada como argumento sigue la sintaxis concreta definida para una expresión and.
-;; 2) Después evalúa si la lista tiene un solo elemento, en cuyo caso retorna la lista con el resultado de aplicar
-;; la función PARSEOR a este elemento.
-;; 3) Finalmente si la lista tiene más de un elemento, retorna una lista con el resultado de aplicar la función PARSEOR al primer elemento y
-;; el resultado de aplicar recursivamente el PARSEAND al resto de la lista.
+;; 2) Si la verificación es correcta,  entonces ignora los símbolos 'AND de la lista, quedandose unicamnete con las expresiones or.
+;; A partir de esta lista de expresiones or realiza un parseo sobre cada una de ellas, utilizando la función PARSEOR.
+;; Finalmente construye el árbol de sintaxis abstracta basado en listas, usando el constructor and-exp.
 
 (define PARSEAND
   (lambda (exp)
-    (cond
-
-      [(not (and-exp? exp))
-       (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <and> := (<or>) | (<or>) 'AND <and>" exp)]
-
-      [(eqv? (length-of-list exp) 1)
-       (cons (PARSEOR (car exp)) empty)]
-
-      [else
-       (cons (PARSEOR (car exp)) (PARSEAND (cddr exp)))])))
+    (if (not (and-exp? exp))
+        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <and> := (<or>) | (<or>) 'AND <and>" exp)
+        (and-exp (my-map PARSEOR (ignore-outer-symbols exp))))))
 
 ;; Pruebas
 (PARSEAND '((1)))
@@ -201,15 +224,16 @@ Christian Vargas 2179172
 ;; Propósito:
 ;; Construye el árbol de sintaxs abstracta basado en listas para una expresión fnc a partir de una lista que cumpla con la gramática.
 ;; 1) Primero evalúa si la lista pasada como argumento sigue la sintaxis concreta definida para una expresión fnc.
-;; 2) Si la verificación es correcta, entonces retorna una lista con el segundo elemento y el resultado de aplicar
-;; el PARSEAND al tercer elemento.
+;; 2) Si la verificación es correcta, entonces realiza un parseo sobre la expresión and, utilizando la función PARSEAND.
+;; Finalmente construye el árbol de sintaxis abstracta basado en listas, usando el constructor fnc-exp, pasandole como argumentos
+;; el número de variables y la expresión and parseada.
 
 (define PARSEBNF
   (lambda (exp) 
     (if (not (fnc-exp? exp))
        (eopl:error 'IllegalArgumentError "El argumento ~s debe ser una lista que siga la gramática <fnc> := 'FNC <int> (<and>)" exp)
-       (list (cadr exp) (PARSEAND (caddr exp))))))
-
+       (fnc-exp (cadr exp) (PARSEAND (caddr exp))))))
+        
 ;; Pruebas
 (PARSEBNF '(FNC 1 ((1))))
 (PARSEBNF '(FNC 2 ((1 OR -2))))
