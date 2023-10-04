@@ -95,7 +95,7 @@ Christian Vargas 2179172
 (my-and '(#f #f));#f
 (my-and '(#t #t #t #t));#t
 
-;; ************** Funciones propias prinicpales **************
+;; ************** Funciones propias principales **************
 
 ;; solve-FNC: and-exp, listaBooleana -> boolean
 ;; Propósito:
@@ -126,7 +126,7 @@ Christian Vargas 2179172
 ;; el String correspondiente
 
 ;; <and-exp> := (<or-exp>) | (<or-exp>) <and-exp> 
-;; <listaBooleana> := ( {<boolean>}* )
+;; <listaDeListasBooleana> := ( {<listaBooleana>}* )
 
 (define travelSols
   (lambda (sols andExp)
@@ -148,8 +148,8 @@ Christian Vargas 2179172
 ;; Utiliza la función travelSols para poder probar cada posible solución generada por la funcion combinations para una
 ;; expression and.
 ;;
-;; <and-exp> := (<or-exp>) | (<or-exp>) <and-exp> 
-;; <listaBooleana> := ( {<boolean>}* )
+;; <fnc-exp> := <int> (<and-exp>)
+;; <listaDeListasBooleana> := ( {<listaBooleana>}* )
 
 (define EVALUARSAT
  (lambda (fnc-e)
