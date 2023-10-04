@@ -70,11 +70,11 @@ Christian Vargas 2179172
        (or (car l1) (my-or (cdr l1)))
        )))
 
-(my-or '(#t #f #t #f));#t
-(my-or '(#f #f #f #f));#f
-(my-or '(#t #f #t #f #t #f #f));#t
-(my-or '(#f #f));#f
-(my-or '(#t #t #t #t));#t
+(eqv? (my-or '(#t #f #t #f)) #t)
+(eqv? (my-or '(#f #f #f #f)) #f)
+(eqv? (my-or '(#t #f #t #f #t #f #f)) #t)
+(eqv? (my-or '(#f #f)) #f)
+(eqv? (my-or '(#t #t #t #t)) #t)
 
 ;; my-and: listaBooleana -> boolean
 ;; Propósito:
@@ -89,11 +89,11 @@ Christian Vargas 2179172
         (and (car l1) (my-and (cdr l1)))
         )))
 
-(my-and '(#t #f #t #f));#f
-(my-and '(#f #f #f #f));#f
-(my-and '(#t #f #t #f #t #f #f));#f
-(my-and '(#f #f));#f
-(my-and '(#t #t #t #t));#t
+(eqv? (my-and '(#t #f #t #f)) #f)
+(eqv? (my-and '(#f #f #f #f)) #f)
+(eqv? (my-and '(#t #f #t #f #t #f #f)) #f)
+(eqv? (my-and '(#f #f)) #f)
+(eqv? (my-and '(#t #t #t #t)) #t)
 
 ;; ************** Funciones propias principales **************
 
@@ -113,11 +113,11 @@ Christian Vargas 2179172
                     andexp)
    )))
 
-(solve-FNC '((1 -2 3 4) (-2 3) (-1 -2 -3) (3 4) (2))  '(#t #f #f #f)) ;#f
-(solve-FNC '((1 -2 3 4) (-2 3) (-1 -2 -3) (3 4) (2))  '(#f #t #t #t)) ;#t
-(solve-FNC '((1 2) (-1) (-2)) '(#t #t)) ;#f
-(solve-FNC '((1 2 3) (-1 2) (-3 2) (-1 -3)) '(#t #t #t)) ;#f
-(solve-FNC '((1 2 3) (-1 2) (-3 2) (-1 -3)) '(#t #t #f)) ;#t
+(eqv? (solve-FNC '((1 -2 3 4) (-2 3) (-1 -2 -3) (3 4) (2))  '(#t #f #f #f)) #f)
+(eqv? (solve-FNC '((1 -2 3 4) (-2 3) (-1 -2 -3) (3 4) (2))  '(#f #t #t #t)) #t)
+(eqv? (solve-FNC '((1 2) (-1) (-2)) '(#t #t)) #f)
+(eqv? (solve-FNC '((1 2 3) (-1 2) (-3 2) (-1 -3)) '(#t #t #t)) #f)
+(eqv? (solve-FNC '((1 2 3) (-1 2) (-3 2) (-1 -3)) '(#t #t #f)) #t)
 
 
 ;; travelSols listaBooleana, and-exp -> String
@@ -156,14 +156,8 @@ Christian Vargas 2179172
  (travelSols (combinations (fnc-exp->var fnc-e)) (fnc-exp->clauses fnc-e))
        ))
 
-(EVALUARSAT '(4 ((1 -2 3 4) (-2 3) (-1 -2 -3) (3 4) (2)))) ;(satisfactible (#f #t #t #t))
-(EVALUARSAT '(2 ((1 2) (-1) (-2)))) ;(insatisfactible '())
-(EVALUARSAT '(3 ((1 2 3) (-1 2) (-3 2) (-1 -3)))) ;(satisfactible (#t #t #f))
-(EVALUARSAT '(4 ((1 4) (-1 2 -3 4) (1 3) (-2 -3) (-2 -3 -4)))) ;(satisfactible (#t #t #f #t))
-(EVALUARSAT '(5 ((1 2 3 4 5) (-1 -2) (1 2 3) (4 5) (-1 -3) (1 2) (1) (-1)))) ; (insatisfactible '())
-
-
-
-
-
-
+(EVALUARSAT (PARSEBNF '(FNC 4 ((1 OR -2  OR 3  OR 4) AND (-2  OR 3) AND (-1  OR -2  OR -3) AND (3  OR 4) AND (2))))) ;(satisfactible (#f #t #t #t))
+(EVALUARSAT (PARSEBNF '(FNC 2 ((1 OR 2) AND (-1) AND (-2))))) ;(insatisfactible '())
+(EVALUARSAT (PARSEBNF '(FNC 3 ((1 OR 2  OR 3) AND (-1  OR 2) AND (-3  OR 2) AND (-1  OR -3))))) ;(satisfactible (#t #t #f))
+(EVALUARSAT (PARSEBNF '(FNC 4 ((1 OR 4) AND (-1 OR 2 OR -3 OR 4) AND (1 OR 3) AND (-2 OR -3) AND (-2 OR -3 OR -4))))) ;(satisfactible (#t #t #f #t)
+(EVALUARSAT (PARSEBNF '(FNC 5 ((1 OR 2 OR 3 OR 4 OR 5) AND (-1 OR -2) AND (1 OR 2 OR 3) AND (4 OR 5) AND (-1 OR -3) AND (1 OR 2) AND (1) AND (-1))))) ; (insatisfactible '())
